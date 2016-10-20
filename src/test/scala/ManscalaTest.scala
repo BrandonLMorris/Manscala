@@ -18,4 +18,19 @@ class ManscalaTest extends FlatSpec {
     assert(new Manscala(new Board(nonzeros, 0, zeros, 0), 1, false).isOver)
     assert(!new Manscala(new Board(nonzeros, 0, nonzeros, 0), 1, false).isOver)
   }
+
+  "The final score" should "add all the pod sides and banks" in {
+    val (s1, s2) = Manscala().finalScore
+    assert(s1 == 24)
+    assert(s2 == 24)
+  }
+
+  "The final score" should "add all the pod sides and banks (2)" in {
+    val (s1, s2) = new Manscala(
+      new Board(Vector(0, 0, 0, 0, 0, 0), 10, Vector(9, 9, 9, 9, 9, 9), 9),
+      1,
+      false).finalScore
+    assert(s1 == 10)
+    assert(s2 == 63)
+  }
 }

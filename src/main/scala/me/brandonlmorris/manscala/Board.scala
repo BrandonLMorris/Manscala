@@ -19,64 +19,58 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
 
     // Redistribute the pieces. Should look for more functional way
     // Board movement positions are always counted from the left
-    val startSide = (if (player == 1) p1 else p2.reverse).toArray
-    val otherSide = (if (player == 1) p2 else p1).toArray.reverse
-    val start = if (player == 1) position else (5 - position)
+    var startSide = (if (player == 1) p1 else p2.reverse).toArray
+    var otherSide = (if (player == 1) p2 else p1).toArray.reverse
+    val start = if (player == 1) position else 5 - position
     if (startSide(start) == 0) throw new IllegalStateException
     var seeds = startSide(start)
     startSide(start) = 0
     var pos = start + 1
-    // Fist go around
-    while (seeds > 0 && pos < 6) {
-      startSide(pos) += 1
-      pos += 1
-      seeds -= 1
+
+    def progress(seeds: Int, position: Int, side: Seq[Int]) = {
+      val dist = math.min(seeds, 6 - position)
+      val newSide = side.zipWithIndex.map {
+        case (a, b) => if (b >= position && b < position + dist) a + 1 else a
+      }
+      (seeds - dist, newSide)
     }
+    var (seeds1, startSide1) = progress(seeds, pos, startSide)
+    seeds = seeds1
+    startSide = startSide1.toArray
 
     // Stop by the bank
-    var firstBank = if (player == 1) bank1 else bank2
-    var secondBank = if (player == 1) bank2 else bank1
+    var newBank = if (player == 1) bank1 else bank2
     if (seeds > 0) {
       seeds -= 1
-      firstBank += 1
+      newBank += 1
     } else ()
 
     // Move around the other side of the board
-    pos = 0
-    while (seeds > 0 && pos < 6) {
-      otherSide(pos) += 1
-      pos += 1
-      seeds -= 1
-    }
+    val (seeds2, otherSide2) = progress(seeds, 0, otherSide)
+    seeds = seeds2
+    otherSide = otherSide2.toArray
 
     // Skip the opponent's bank, but keep going if we can
-    pos = 0
-    while (seeds > 0 && pos < 6) {
-      startSide(pos) += 1
-      pos += 1
-      seeds -= 1
-    }
+    val (seeds3, startSide3) = progress(seeds, 0, startSide)
+    seeds = seeds3
+    startSide = startSide3.toArray
 
     // Stop by the bank
     if (seeds > 0) {
-      firstBank += 1
+      newBank += 1
       seeds -= 1
-    }
+    } else ()
 
     // Just to be safe
-    pos = 0
-    while (seeds > 0 && pos < 6) {
-      otherSide(pos) += 1
-      pos += 1
-      seeds -= 1
-    }
+    val (seeds4, otherSide4) = progress(seeds, 0, otherSide)
+    seeds = seeds4
+    otherSide = otherSide4.toArray
 
     // Construct the new board
-    val newP1 = (if (player == 1) startSide else otherSide).toVector
-    val newP2 = (if (player == 2) startSide.reverse else otherSide.reverse).toVector
-    val b1 = if (player == 1) firstBank else secondBank
-    val b2 = if (player == 1) secondBank else firstBank
-    new Board(newP1, b1, newP2, b2)
+    if (player == 1)
+      new Board(startSide.toVector, newBank, otherSide.reverse.toVector, bank2)
+    else
+      new Board(otherSide.toVector, bank1, startSide.reverse.toVector, newBank)
   }
 
   override def toString = {
@@ -85,7 +79,7 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
     f"""
     >${"-" * 47}
     >|    |  $top    |
-    >| $bank2%-3s|                 |                 | $bank1%-3s|
+    >| $bank2%-3s|${" " * 17}|${" " * 17}| $bank1%-3s|
     >|    |  $bottom    |
     >${"-" * 47}
     >""".stripMargin('>').trim

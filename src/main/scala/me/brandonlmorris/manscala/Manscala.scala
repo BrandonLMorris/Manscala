@@ -10,12 +10,21 @@ package me.brandonlmorris.manscala
   * Created by bmorris on 10/18/16.
   */
 class Manscala(val board: Board, val turn: Int, val gameOver: Boolean) {
-  def isOver(): Boolean = {
+  /** Determine if a game is complete */
+  def isOver: Boolean = {
     board.p1.forall(_ == 0) || board.p2.forall(_ == 0)
+  }
+
+  /** Caclulate the final score. Assumes the game is actually over */
+  def finalScore: (Int, Int) = {
+    val p1Score = board.bank1 + board.p1.sum
+    val p2Score = board.bank2 + board.p2.sum
+    (p1Score, p2Score)
   }
 }
 
 object Manscala {
+  /** Program entry point */
   def main(args: Array[String]) = {
     val welcomeMessage =
       """
