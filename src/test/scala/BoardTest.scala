@@ -92,13 +92,91 @@ class BoardTest extends FlatSpec {
       1,
       Vector(0, 0, 0, 0, 0, 0),
       0).move(1, 5)
-    assertSidesEqual(board.p2, Vector(1, 1, 1, 1, 1, 1))
-    assertSidesEqual(board.p1, Vector(1, 1, 1, 0, 0, 0))
+      assertSidesEqual(board.p2, Vector(1, 1, 1, 1, 1, 1))
+      assertSidesEqual(board.p1, Vector(1, 1, 1, 0, 0, 0))
+      assert(board.bank1 == 2)
+      assert(board.bank2 == 0)
+  }
+
+  "Board move 3 sides" should "work fine" in {
+    val board = new Board(
+      (for (i <- 1 to 5) yield 0) :+ 15,
+      0,
+      for (i <- 1 to 6) yield 0,
+      0
+    ).move(1, 5)
+    assertSidesEqual(board.p2, Vector(1, 1, 1, 1, 1, 2))
+    assertSidesEqual(board.p1, Vector(1, 1, 1, 1, 1, 1))
     assert(board.bank1 == 2)
     assert(board.bank2 == 0)
   }
 
-  def assertSidesEqual(s1: Seq[Int], s2: Seq[Int]): Unit = {
+  "Board move" should "not screw this up" in {
+    val side = Vector(0, 0, 0, 0, 0, 10)
+    val board = new Board(side, 0, side.reverse, 0)
+    val moved = board.move(1, 5)
+    assertSidesEqual(moved.p2, Vector(11, 1, 1, 1, 1, 1))
+    assertSidesEqual(moved.p1, Vector(1, 1, 1, 0, 0, 0))
+    assert(moved.bank1 == 1)
+    assert(moved.bank2 == 0)
+  }
+
+  "Calculating last position" should "work for one side of the board" in {
+    val (player1, pos1) = Board().lastPosAfterMove(1, 0)
+    val (player2, pos2) = Board().lastPosAfterMove(2, 5)
+    assert(player1 == 1)
+    assert(pos1 == 4)
+  }
+
+  "Calculating last position" should "work for movement of one" in {
+    val side = Vector(1, 0, 0, 0, 0, 0)
+    val (player, pos) = new Board(side, 0, side, 0).lastPosAfterMove(1, 0)
+    assert(player == 1)
+    assert(pos == 1)
+  }
+
+  "Calculating last position" should "work for landing in player's bank" in {
+    val side = Vector(0, 0, 0, 0, 0, 1)
+    assert((1, 6) == new Board(side, 0, side, 0).lastPosAfterMove(1, 5))
+    assert((2, 6) == new Board(side, 0, side.reverse, 0).lastPosAfterMove(2, 0))
+  }
+
+  "Calculating last position" should "work for two sides" in {
+    assert((2, 3) == Board().lastPosAfterMove(1, 5))
+    assert((1, 0) == Board().lastPosAfterMove(2, 2))
+  }
+
+  "Calculating last position" should "work for three sides" in {
+    val side = Vector(0, 0, 0, 0, 0, 10)
+    assert((1, 2) == new Board(side, 0, side.reverse, 0).lastPosAfterMove(1, 5))
+    val b = new Board(side, 0, side.reverse, 0)
+    assert((2, 3) == new Board(side, 0, side.reverse, 0).lastPosAfterMove(2, 0))
+  }
+
+  "Calculating last position" should "work for three sides and bank" in {
+    val side = Vector(0, 0, 0, 0, 0, 14)
+    assert((1, 6) == new Board(side, 0, side, 0).lastPosAfterMove(1, 5))
+  }
+
+  "Calculating last position" should "work for three sides and bank, player 2" in {
+    val side = Vector(14, 0, 0, 0, 0, 0)
+    assert((2, 6) == new Board(side, 0, side, 0).lastPosAfterMove(2, 0))
+  }
+
+  "Calculating last position" should "work for fourth side, player 1" in {
+    val side = Vector(0, 0, 0, 0, 0, 16)
+    val b = new Board(side, 0, side.reverse, 0)
+    assert((2, 4) == new Board(side, 0, side, 0).lastPosAfterMove(1, 5))
+  }
+
+  "Calculating last position" should "work for fourth side, player 2" in {
+    val side = Vector(0, 0, 0, 0, 0, 16)
+    val b = new Board(side, 0, side.reverse, 0)
+    assert((1, 1) == new Board(side, 0, side.reverse, 0).lastPosAfterMove(2, 0))
+  }
+
+  /** Helper to check equality of two sequences */
+  private def assertSidesEqual(s1: Seq[Int], s2: Seq[Int]): Unit = {
     assert(s1.length == s2.length, "Side lengths didn't match")
     assert(s1.zip(s2) forall { case (a, b) => a == b }, "Side contents don't match")
   }

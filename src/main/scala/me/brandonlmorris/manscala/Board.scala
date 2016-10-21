@@ -34,8 +34,8 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
     // Redistribute the pieces. Board movement positions are always counted
     // from the left
     val (startSide, oppSide) =
-      if (player == 1) (p1.toArray, p2.toArray)
-      else (p2.reverse.toArray, p1.reverse.toArray)
+      if (player == 1) (p1.toArray, p2.reverse.toArray)
+      else (p2.reverse.toArray, p1.toArray)
     val start = if (player == 1) position else 5 - position
     val playerBank = if (player == 1) bank1 else bank2
     if (startSide(start) == 0) throw new IllegalStateException
@@ -59,11 +59,44 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
     // Just to be safe
     val (seedsFourthPass, oppSideFourthPass) = progress(seedsThirdsPassAndBank, 0, oppSideSecondPass)
 
+    // Make our assumption explicit
+    assert(seedsFourthPass == 0, "Still seeds after fourth pass, did not account for that")
+
     // Construct the new board
     if (player == 1)
-      new Board(playerPodsThirdPass.toVector, playerBankSecondPass, oppSideSecondPass.reverse.toVector, bank2)
+      new Board(playerPodsThirdPass.toVector, playerBankSecondPass, oppSideFourthPass.reverse.toVector, bank2)
     else
-      new Board(oppSideSecondPass.toVector, bank1, playerPodsThirdPass.reverse.toVector, playerBankSecondPass)
+      new Board(oppSideFourthPass.toVector, bank1, playerPodsThirdPass.reverse.toVector, playerBankSecondPass)
+  }
+
+  /** Calculate the last pod that will be visited by a move
+    *
+    * @param player the number (1, 2) of the player making the move
+    * @param pos the index of the move about to be made (always counting from the left)
+    * @return a tuple (player, pos) that represents the players side and position the last seed will be deposited in.
+    *         A position of 6 represents a player's bank.
+    */
+  def lastPosAfterMove(player: Int, pos: Int): (Int, Int) = {
+    val seeds = (if (player == 1) p1 else p2)(pos)
+    val distToBank = if (player == 1) 6 - pos else pos + 1
+
+    // Could use a better approach
+    if (player == 1)
+      if (seeds < distToBank) (1, pos + seeds)
+      else if (seeds == distToBank) (1, 6)
+      else if (seeds <= distToBank + 6) (2, 6 - (seeds - distToBank))
+      else if (seeds <= distToBank + 12) (1, seeds - distToBank - 7)
+      else if (seeds == distToBank + 13) (1, 6)
+      else if (seeds <= distToBank + 19) (2, 19 - (seeds - distToBank))
+      else { assert(false); (0, 0) }
+    else
+      if (seeds < distToBank) (1, 6 - pos)
+      else if (seeds == distToBank) (2, 6)
+      else if (seeds <= distToBank + 6) (1, seeds - distToBank - 1)
+      else if (seeds <= distToBank + 12) (2, 12 - (seeds - distToBank))
+      else if (seeds == distToBank + 13) (2, 6)
+      else if (seeds <= distToBank + 19) (1, seeds - distToBank - 14)
+      else { assert(false); (0, 0) }
   }
 
   override def toString = {
