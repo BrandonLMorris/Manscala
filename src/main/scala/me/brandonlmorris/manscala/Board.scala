@@ -7,6 +7,7 @@ package me.brandonlmorris.manscala
   * @param bank1: The number of seeds in the lower player's bank
   * @param p2: The number of seeds in each of upper player's pods (left to right, from that player's perspective)
   * @param bank2: The number of seeds in the upper player's bank
+  * @return a new board after the move takes place
   *
   * Created by bmorris on 10/18/16.
   */
@@ -17,16 +18,7 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
     if (player != 1 && player != 2) throw new IllegalArgumentException
     if (position < 0 || position > 5) throw new IllegalArgumentException
 
-    // Redistribute the pieces. Should look for more functional way
-    // Board movement positions are always counted from the left
-    var startSide = (if (player == 1) p1 else p2.reverse).toArray
-    var otherSide = (if (player == 1) p2 else p1).toArray.reverse
-    val start = if (player == 1) position else 5 - position
-    if (startSide(start) == 0) throw new IllegalStateException
-    var seeds = startSide(start)
-    startSide(start) = 0
-    var pos = start + 1
-
+    // Inner function for depositing seeds along a side
     def progress(seeds: Int, position: Int, side: Seq[Int]) = {
       val dist = math.min(seeds, 6 - position)
       val newSide = side.zipWithIndex.map {
@@ -34,48 +26,49 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
       }
       (seeds - dist, newSide)
     }
-    var (seeds1, startSide1) = progress(seeds, pos, startSide)
-    seeds = seeds1
-    startSide = startSide1.toArray
+    // Inner function for depositing a seed in the bank
+    def depositInBank(seeds: Int, bank: Int): (Int, Int) = {
+      if (seeds > 0) (seeds - 1, bank + 1) else (seeds, bank)
+    }
 
-    // Stop by the bank
-    var newBank = if (player == 1) bank1 else bank2
-    if (seeds > 0) {
-      seeds -= 1
-      newBank += 1
-    } else ()
+    // Redistribute the pieces. Board movement positions are always counted
+    // from the left
+    val (startSide, oppSide) =
+      if (player == 1) (p1.toArray, p2.toArray)
+      else (p2.reverse.toArray, p1.reverse.toArray)
+    val start = if (player == 1) position else 5 - position
+    val playerBank = if (player == 1) bank1 else bank2
+    if (startSide(start) == 0) throw new IllegalStateException
+    val seeds = startSide(start)
+    startSide(start) = 0
+    val pos = start + 1
+
+    // First side pass
+    val (seedsFirstPass, playerPodsFirstPass) = progress(seeds, pos, startSide)
+    val (seedsFirstPassAndBank, playerBankFirstPass) = depositInBank(seedsFirstPass, playerBank)
 
     // Move around the other side of the board
-    val (seeds2, otherSide2) = progress(seeds, 0, otherSide)
-    seeds = seeds2
-    otherSide = otherSide2.toArray
+    val (seedsSecondPass, oppSideSecondPass) = progress(seedsFirstPassAndBank, 0, oppSide)
 
     // Skip the opponent's bank, but keep going if we can
-    val (seeds3, startSide3) = progress(seeds, 0, startSide)
-    seeds = seeds3
-    startSide = startSide3.toArray
+    val (seedsThirdPass, playerPodsThirdPass) = progress(seedsSecondPass, 0, playerPodsFirstPass)
 
     // Stop by the bank
-    if (seeds > 0) {
-      newBank += 1
-      seeds -= 1
-    } else ()
+    val (seedsThirdsPassAndBank, playerBankSecondPass) = depositInBank(seedsThirdPass, playerBankFirstPass)
 
     // Just to be safe
-    val (seeds4, otherSide4) = progress(seeds, 0, otherSide)
-    seeds = seeds4
-    otherSide = otherSide4.toArray
+    val (seedsFourthPass, oppSideFourthPass) = progress(seedsThirdsPassAndBank, 0, oppSideSecondPass)
 
     // Construct the new board
     if (player == 1)
-      new Board(startSide.toVector, newBank, otherSide.reverse.toVector, bank2)
+      new Board(playerPodsThirdPass.toVector, playerBankSecondPass, oppSideSecondPass.reverse.toVector, bank2)
     else
-      new Board(otherSide.toVector, bank1, startSide.reverse.toVector, newBank)
+      new Board(oppSideSecondPass.toVector, bank1, playerPodsThirdPass.reverse.toVector, playerBankSecondPass)
   }
 
   override def toString = {
-    val top = p2.foldLeft("")((a, b) => a + f" $b%-3s| ").trim
-    val bottom = p1.foldLeft("")((a, b) => a + f" $b%-3s| ").trim
+    val top = p2.foldLeft("")((a, b) => a + StringContext(" ", "%-3s| ").f(b)).trim
+    val bottom = p1.foldLeft("")((a, b) => a + StringContext(" ", "%-3s| ").f(b)).trim
     f"""
     >${"-" * 47}
     >|    |  $top    |

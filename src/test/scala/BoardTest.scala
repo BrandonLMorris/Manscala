@@ -100,6 +100,6 @@ class BoardTest extends FlatSpec {
 
   def assertSidesEqual(s1: Seq[Int], s2: Seq[Int]): Unit = {
     assert(s1.length == s2.length, "Side lengths didn't match")
-    assert(s1.zip(s2).forall { case (a, b) => a == b }, "Side contents don't match")
+    assert(s1.zip(s2) forall { case (a, b) => a == b }, "Side contents don't match")
   }
 }
