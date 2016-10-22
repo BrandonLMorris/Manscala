@@ -175,6 +175,37 @@ class BoardTest extends FlatSpec {
     assert((1, 1) == new Board(side, 0, side.reverse, 0).lastPosAfterMove(2, 0))
   }
 
+  "Calculating last position" should "not screw this up" in {
+    val side = Vector(0, 1, 0, 0, 0, 0)
+    assert((2, 0) == new Board(side, 0, side, 0).lastPosAfterMove(2, 1))
+  }
+
+  "Capture" should "clear both pods sides and add them to the bank, player 1" in {
+    val board = new Board(
+      Vector(5, 0, 0, 0, 0, 0),
+      1,
+      Vector(10, 0, 0, 0, 0, 0),
+      2
+    ).capture(1, 0)
+    assertSidesEqual(board.p1, for (i <- 1 to 6) yield 0)
+    assertSidesEqual(board.p2, for (i <- 1 to 6) yield 0)
+    assert(board.bank1 == 16)
+    assert(board.bank2 == 2)
+  }
+
+  "Capture" should "clear both pods sides and add them to the bank, player 2" in {
+    val board = new Board(
+      Vector(0, 0, 0, 5, 0, 0),
+      1,
+      Vector(0, 0, 0, 10, 0, 0),
+      2
+    ).capture(2, 3)
+    assertSidesEqual(board.p1, for (i <- 1 to 6) yield 0)
+    assertSidesEqual(board.p2, for (i <- 1 to 6) yield 0)
+    assert(board.bank2 == 17)
+    assert(board.bank1 == 1)
+  }
+
   /** Helper to check equality of two sequences */
   private def assertSidesEqual(s1: Seq[Int], s2: Seq[Int]): Unit = {
     assert(s1.length == s2.length, "Side lengths didn't match")

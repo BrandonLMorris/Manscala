@@ -69,6 +69,25 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
       new Board(oppSideFourthPass.toVector, bank1, playerPodsThirdPass.reverse.toVector, playerBankSecondPass)
   }
 
+  /** Capture pieces from a mancala game
+    *
+    * Pieces from the capturing pod and the opposite pod (same position, other player) are all emptied and moved
+    * to the capturing player's bank.
+    *
+    * @param player the side (1 or 2) doing the capturing
+    * @param pos the position doing the capturing
+    * @return a new mancala board after the capture
+    */
+  def capture(player: Int, pos: Int): Board = {
+    assert(p1(pos) != 0 && p2(pos) != 0)
+    val (newBank1, newBank2) =
+      if (player == 1)
+        (bank1 + p1(pos) + p2(pos), bank2)
+      else
+        (bank1, bank2 + p1(pos) + p2(pos))
+    new Board(p1.updated(pos, 0), newBank1, p2.updated(pos, 0), newBank2)
+  }
+
   /** Calculate the last pod that will be visited by a move
     *
     * @param player the number (1, 2) of the player making the move
@@ -90,7 +109,7 @@ class Board(val p1: Seq[Int], val bank1: Int, val p2: Seq[Int], val bank2: Int) 
       else if (seeds <= distToBank + 19) (2, 19 - (seeds - distToBank))
       else { assert(false); (0, 0) }
     else
-      if (seeds < distToBank) (1, 6 - pos)
+      if (seeds < distToBank) (2, pos - seeds)
       else if (seeds == distToBank) (2, 6)
       else if (seeds <= distToBank + 6) (1, seeds - distToBank - 1)
       else if (seeds <= distToBank + 12) (2, 12 - (seeds - distToBank))
