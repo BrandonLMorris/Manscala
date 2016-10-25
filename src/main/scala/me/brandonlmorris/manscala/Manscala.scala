@@ -52,6 +52,7 @@ object Manscala {
         |""".stripMargin
     println(welcomeMessage)
     var game = Manscala()
+    val (player1, player2) = (new HumanPlayer(), new HumanPlayer())
 
     // Main game loop
     while (!game.isOver) {
@@ -65,18 +66,15 @@ object Manscala {
         println(game.board)
       }
       print(s"Player ${game.turn}'s turn: ")
-      var s = StdIn.readChar()
 
-      // Validate the selected spot
-      val playerSide = if (game.turn == 1) game.board.p1 else game.board.p2
-      while (playerSide(s - 'a') == 0) {
-        println("That's not a valid position. Pick a real one, bozo")
-        s = StdIn.readChar()
-      }
-      game = game.playTurn(s - 'a')
+      val pos: Int =
+        if (game.turn == 1) player1.getMove(game.board, 1)
+        else player2.getMove(game.board, 2)
+      game = game.playTurn(pos)
     }
 
     // Print out the final score
+    println(game.board)
     val (p1score, p2score) = game.finalScore
     println(s"Player 1: $p1score   Player 2: $p2score")
     val winner = if (p1score > p2score) 1 else 2
@@ -84,7 +82,7 @@ object Manscala {
   }
 
   /** Print the board options correctly aligned */
-  def printBoardPositions = {
+  def printBoardPositions() = {
     println("       (a)   (b)   (c)   (d)   (e)   (f)")
   }
 
