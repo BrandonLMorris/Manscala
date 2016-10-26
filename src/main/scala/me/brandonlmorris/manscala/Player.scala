@@ -1,6 +1,7 @@
 package me.brandonlmorris.manscala
 
 import io.StdIn
+import scala.util.Random
 
 /** A player of the mancala game
   *
@@ -17,6 +18,7 @@ trait Player {
 }
 
 
+/** A human player that makes moves through stdin */
 class HumanPlayer extends Player {
   /** Read a human's move selection from stdin */
   def getMove(board: Board, turn: Int): Int = {
@@ -26,5 +28,18 @@ class HumanPlayer extends Player {
       s = StdIn.readChar - 'a'
     }
     s
+  }
+}
+
+/** A computer player that randomly selects valid moves */
+class RandomComputerPlayer extends Player {
+  /** Randomly pick a valid move on the board */
+  def getMove(board: Board, turn: Int): Int ={
+    val side = if (turn == 1) board.p1 else board.p2
+    val valid_moves = side.zipWithIndex.filter{ case (value, index) => value > 0 }.map(_._2)
+    val selected_move = valid_moves(Random.nextInt(valid_moves.length))
+    Thread sleep 2000   // Pause for 2 seconds
+    println(('a' + selected_move).toChar)
+    selected_move
   }
 }

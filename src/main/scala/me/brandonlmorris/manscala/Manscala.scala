@@ -52,7 +52,7 @@ object Manscala {
         |""".stripMargin
     println(welcomeMessage)
     var game = Manscala()
-    val (player1, player2) = (new HumanPlayer(), new HumanPlayer())
+    val (player1, player2) = getPlayers
 
     // Main game loop
     while (!game.isOver) {
@@ -84,6 +84,25 @@ object Manscala {
   /** Print the board options correctly aligned */
   def printBoardPositions() = {
     println("       (a)   (b)   (c)   (d)   (e)   (f)")
+  }
+
+  def getPlayers: (Player, Player) = {
+    def getPlayer(playerNum: Int): Player = {
+      val options =
+        """
+        |  1) Human player
+        |  2) Computer, random selection
+      """.stripMargin
+      println(s"Who is player $playerNum?")
+      println(options)
+      var selection = StdIn.readLine
+      while (selection.length > 1 || (selection(0) > '2' && selection(0) < '1')) {
+        println("That's not a valid choice. Please the number of one of the options")
+      }
+      if (selection(0) == '1') new HumanPlayer
+      else new RandomComputerPlayer
+    }
+    (getPlayer(1), getPlayer(2))
   }
 
   /** Factory for a new game */
